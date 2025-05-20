@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
-import { setCookie } from 'cookies-next'
 import { colleges } from '@/utils/colleges'
 import { branches } from '@/utils/branches'
 
@@ -24,67 +23,57 @@ export default function SignupPage() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  const handleSelectChange = (selectedOption, fieldName) => {
-    setForm({ ...form, [fieldName]: selectedOption?.value || '' })
+  const handleSelectChange = (sel, field) => {
+    setForm({ ...form, [field]: sel?.value || '' })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
-    const phoneRegex = /^[6-9]\d{9}$/
-    if (!phoneRegex.test(form.phone)) {
-      setError('Invalid Indian phone number.')
+    // Indian phone validation
+    if (!/^[6-9]\d{9}$/.test(form.phone)) {
+      setError('Invalid Indian phone number')
       return
     }
 
     const res = await fetch('/api/signup', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form),
     })
-    const data = await res.json()
-    if (data.success) {
-      // write all user info into cookies
-      setCookie('name',   form.name,    { path: '/' })
-      setCookie('phone',  form.phone,   { path: '/' })
-      setCookie('email',  form.email,   { path: '/' })
-      setCookie('college',form.college, { path: '/' })
-      setCookie('branch', form.branch,  { path: '/' })
+    const { success, message } = await res.json()
+    if (success) {
       router.push('/start')
     } else {
-      setError(data.message)
+      setError(message || 'Signup failed')
     }
   }
 
   return (
     <div className="relative w-full min-h-screen flex items-center justify-center bg-[#64126D] px-4 overflow-hidden">
-
-      {/* White Signup Card */}
       <form
         onSubmit={handleSubmit}
-        className="relative z-10 bg-white w-full max-w-xl p-10 rounded-3xl shadow-[0_25px_60px_-10px_rgba(0,0,0,0.3)] border border-gray-200 flex flex-col gap-6"
+        className="relative z-10 bg-white w-full max-w-xl p-10 rounded-3xl shadow-2xl border border-gray-200 flex flex-col gap-6"
       >
-        {/* Logo Header */}
+        {/* Logo */}
         <div className="text-center">
-          <img src="/accent.png" alt="Accent Logo" className="w-40 h-auto mx-auto mb-2" />
-          <p className="text-sm text-gray-600 tracking-wide">Enter your details to begin</p>
+          <img src="/accent.png" alt="Logo" className="w-40 mx-auto mb-2" />
+          <p className="text-sm text-gray-600">Enter your details to begin</p>
         </div>
 
-        {/* Input Fields */}
         <input
           name="name"
-          type="text"
           placeholder="Full Name"
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-400"
           required
         />
         <input
           name="phone"
-          type="tel"
           placeholder="Phone Number"
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-400"
           required
         />
         <input
@@ -92,32 +81,26 @@ export default function SignupPage() {
           type="email"
           placeholder="Email Address"
           onChange={handleChange}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400"
+          className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-purple-400"
           required
         />
 
-        {/* Dropdown Selects */}
         <Select
           options={colleges.map((c) => ({ label: c, value: c }))}
           placeholder="Select College"
-          onChange={(option) => handleSelectChange(option, 'college')}
-          className="text-black"
-          classNamePrefix="react-select"
+          onChange={(o) => handleSelectChange(o, 'college')}
         />
         <Select
           options={branches.map((b) => ({ label: b, value: b }))}
           placeholder="Select Branch"
-          onChange={(option) => handleSelectChange(option, 'branch')}
-          className="text-black"
-          classNamePrefix="react-select"
+          onChange={(o) => handleSelectChange(o, 'branch')}
         />
 
-        {error && <p className="text-red-500 text-sm -mt-2">{error}</p>}
+        {error && <p className="text-red-500">{error}</p>}
 
-        {/* Submit Button */}
         <button
           type="submit"
-          className="w-full py-3 bg-[#86288F] text-white font-semibold rounded-xl hover:bg-[#64126D] transition-all duration-200"
+          className="w-full py-3 bg-[#86288F] text-white rounded-xl hover:bg-[#64126D] transition"
         >
           Sign Up
         </button>
