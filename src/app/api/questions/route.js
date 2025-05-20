@@ -14,8 +14,12 @@ export async function GET(req) {
     const filter = branch ? { branch } : {}
     const questions = await collection.find(filter).toArray()
 
-    // Drop the Mongo-generated _id by mapping it to `_` then returning the rest
-    const cleanQuestions = questions.map(({ _id: _, ...rest }) => rest)
+    // Remove _id from response
+    const cleanQuestions = questions.map((doc) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { _id, ...rest } = doc
+      return rest
+    })
 
     return NextResponse.json(cleanQuestions)
   } catch (error) {
