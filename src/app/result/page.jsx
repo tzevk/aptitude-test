@@ -72,8 +72,6 @@ export default function ResultPage() {
     <div className="h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="max-w-md text-center bg-white p-8 rounded-xl shadow-lg">
         <h1 className="text-3xl font-bold mb-4">Quiz Completed</h1>
-        <p className="text-xl mb-2">Correct Answers: <strong>{score}</strong></p>
-        <p className="text-xl mb-4">Questions Attempted: <strong>{attempts}</strong></p>
         <p className="text-lg">{status}</p>
       </div>
     </div>
