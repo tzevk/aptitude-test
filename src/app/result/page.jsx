@@ -6,8 +6,8 @@ import Cookies from 'js-cookie'
 
 export default function ResultPage() {
   const router = useRouter()
-  const [score, setScore] = useState<number | null>(null)
-  const [attempts, setAttempts] = useState<number | null>(null)
+  const [score, setScore] = useState(null)
+  const [attempts, setAttempts] = useState(null)
   const [status, setStatus] = useState('Saving...')
 
   // on mount, read query params from window.location
