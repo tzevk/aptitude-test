@@ -1,73 +1,65 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Cookies from 'js-cookie'
+import { useRouter }           from 'next/navigation'
+import { markQuizDone }        from '@/utils/attempt'
+import Cookies                 from 'js-cookie'
 
-export default function ResultPage() {
-  const router = useRouter()
-  const [score, setScore] = useState(null)
-  const [attempts, setAttempts] = useState(null)
-  const [status, setStatus] = useState('Saving...')
+export default function ResultPage () {
+  const router              = useRouter()
+  const [status, setStatus] = useState('Saving…')
 
-  // on mount, read query params from window.location
+  /* ------------- save result & mark attempt ----------------- */
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const sc = parseInt(params.get('score') || '0')
-    const at = parseInt(params.get('attempts') || '0')
-    setScore(sc)
-    setAttempts(at)
+    // read query-string
+    const params   = new URLSearchParams(window.location.search)
+    const score    = Number(params.get('score')    || 0)
+    const attempts = Number(params.get('attempts') || 0)
+
+    // mark cookie so quiz can’t be started again
+    markQuizDone()
 
     const name    = Cookies.get('user_name')    || 'Anonymous'
-    const email   = Cookies.get('user_email')   || 'no-email@example.com'
-    const phone   = Cookies.get('user_phone')   || '0000000000'
-    const college = Cookies.get('user_college') || 'Unknown'
-    const branch  = Cookies.get('user_branch')  || 'General'
+    const email   = Cookies.get('user_email')   || ''
+    const phone   = Cookies.get('user_phone')   || ''
+    const college = Cookies.get('user_college') || ''
+    const branch  = Cookies.get('user_branch')  || ''
 
-    const saveResult = async () => {
+    const save = async () => {
       try {
-        const res = await fetch('/api/results', {
-          method: 'POST',
+        await fetch('/api/results', {
+          method : 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name,
-            email,
-            phone,
-            college,
-            branch,
-            score: sc,
-            attempts: at,
-            timestamp: new Date().toISOString()
-          }),
+          body   : JSON.stringify({
+            name, email, phone, college, branch,
+            score, attempts, timestamp : new Date().toISOString()
+          })
         })
-
-        if (res.ok) {
-          setStatus('✅ Quiz Completed! Your result has been saved.')
-        } else {
-          setStatus('❌ Failed to save your result.')
-        }
-      } catch (error) {
-        console.error(error)
-        setStatus('❌ An error occurred while saving.')
+        setStatus('✅ Quiz Completed! Your result has been saved.')
+      } catch {
+        setStatus('❌ Could not save your result.')
       }
     }
-
-    saveResult()
+    save()
   }, [])
 
-  // 40s redirect back to home
+  /* ------------- block back-navigation ---------------------- */
   useEffect(() => {
-    const timer = setTimeout(() => {
-      router.push('/')
-    }, 40000)
-    return () => clearTimeout(timer)
+    history.pushState(null, '', window.location.href)
+
+    const onPop = () => history.pushState(null, '', window.location.href)
+    window.addEventListener('popstate', onPop)
+
+    return () => window.removeEventListener('popstate', onPop)
+  }, [])
+
+  /* ------------- auto-redirect home after 40 s -------------- */
+  useEffect(() => {
+    const id = setTimeout(() => router.replace('/'), 40_000)
+    return () => clearTimeout(id)
   }, [router])
 
-  // don't render until we know score/attempts
-  if (score === null || attempts === null) {
-    return null
-  }
-
+  /* -------------------------- UI ---------------------------- */
   return (
     <div className="h-screen flex items-center justify-center bg-gray-100 p-4">
       <div className="max-w-md text-center bg-white p-8 rounded-xl shadow-lg">
