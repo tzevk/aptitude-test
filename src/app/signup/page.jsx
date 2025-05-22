@@ -80,7 +80,7 @@ export default function SignupPage () {
           placeholder="Full Name"
           onChange={handleChange}
           className="w-full px-4 py-2.5 sm:py-3 border rounded-lg
-                     text-sm sm:text-base focus:ring-2 focus:ring-purple-400"
+                     text-sm sm:text-base focus:ring-2 focus:ring-purple-400 text-gray-700"
           required
         />
 
@@ -91,7 +91,7 @@ export default function SignupPage () {
           placeholder="10-digit Mobile No."
           onChange={handleChange}
           className="w-full px-4 py-2.5 sm:py-3 border rounded-lg
-                     text-sm sm:text-base focus:ring-2 focus:ring-purple-400"
+                     text-sm sm:text-base focus:ring-2 focus:ring-purple-400 text-gray-700"
           required
         />
 
@@ -101,7 +101,7 @@ export default function SignupPage () {
           placeholder="Email Address"
           onChange={handleChange}
           className="w-full px-4 py-2.5 sm:py-3 border rounded-lg
-                     text-sm sm:text-base focus:ring-2 focus:ring-purple-400"
+                     text-sm sm:text-base focus:ring-2 focus:ring-purple-400 text-gray-700"
           required
         />
 
@@ -110,6 +110,7 @@ export default function SignupPage () {
           placeholder="Select College"
           onChange={o => handleSelectChange(o, 'college')}
           classNamePrefix="react-select"
+          
         />
 
         <Select

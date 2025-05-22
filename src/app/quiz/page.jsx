@@ -1,27 +1,27 @@
 'use client'
 
 import { useEffect, useState, useRef } from 'react'
-import { useRouter }                   from 'next/navigation'
-import { shuffleQuestions }            from '@/utils/shuffle'
-import { getCookie }                   from 'cookies-next'
+import { useRouter }                    from 'next/navigation'
+import { shuffleQuestions }             from '@/utils/shuffle'
+import { getCookie }                    from 'cookies-next'
 
-export default function QuizPage () {
-  /* ───────────────────── original state / logic ───────────────────── */
-  const [questions, setQuestions] = useState([])
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [selectedOption, setSelectedOption] = useState('')
-  const [answers, setAnswers] = useState({})
-  const [timeLeft, setTimeLeft] = useState(1800)
-  const [warningGiven, setWarningGiven] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [tabSwitchDetected, setTabSwitchDetected] = useState(false)
-  const [copyAttempts, setCopyAttempts] = useState(0)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const router = useRouter()
+export default function QuizPage() {
+  /* ───────────────────── state & refs ────────────────────── */
+  const [questions,        setQuestions]        = useState([])
+  const [currentIndex,     setCurrentIndex]     = useState(0)
+  const [selectedOption,   setSelectedOption]   = useState('')
+  const [answers,          setAnswers]          = useState({})
+  const [timeLeft,         setTimeLeft]         = useState(1800)        // 30 min
+  const [warningGiven,     setWarningGiven]     = useState(false)
+  const [showModal,        setShowModal]        = useState(false)
+  const [tabSwitchDetected,setTabSwitchDetected]= useState(false)
+  const [copyAttempts,     setCopyAttempts]     = useState(0)
+  const [isSubmitted,      setIsSubmitted]      = useState(false)
 
-  /* … everything here is **unchanged** – only UI below got tweaks … */
+  const router            = useRouter()
+  const timerRef          = useRef(null)        // handle for setInterval
 
-  /* ───────────────── fetch 50 questions once ───────────────── */
+  /* ───────────────── fetch 50 questions once ─────────────── */
   useEffect(() => {
     (async () => {
       const res  = await fetch('/api/questions')
@@ -30,10 +30,29 @@ export default function QuizPage () {
     })()
   }, [])
 
-  /* ───────────────── single-submission ref  ───────────────── */
+  /* ──────────────── kick-off the countdown only once Qs load ───────────── */
+  useEffect(() => {
+    if (!questions.length || isSubmitted) return
+
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current)
+          submitResults.current()
+          return 0
+        }
+        return t - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timerRef.current)
+  }, [questions, isSubmitted])
+
+  /* ───────────────── single-submit guard ─────────────────── */
   const submitResults = useRef(async () => {
     if (isSubmitted) return
     setIsSubmitted(true)
+    clearInterval(timerRef.current)            // stop the clock
 
     const correct   = Object.entries(answers)
                             .filter(([i, ans]) => questions[+i]?.answer === ans).length
@@ -55,13 +74,49 @@ export default function QuizPage () {
       })
     })
 
-    router.push(`/result?score=${correct}&attempts=${attempted}`)
-  }).current
+    router.replace(`/result?score=${correct}&attempts=${attempted}`)
+  })
 
-  /* ───────────────── timer, restore-selection, guards ─────────────── */
-  /* …… (your original effects remain exactly the same) …… */
+  /* ───────────────── restore selection when navigating ──── */
+  useEffect(() => {
+    setSelectedOption(answers[currentIndex] || '')
+  }, [currentIndex, answers])
 
-  /* ─────────────────────── render helpers ─────────────────── */
+  /* ─────────────── tab-switch watch / 1-strike policy ───── */
+  useEffect(() => {
+    if (isSubmitted) return
+    const handleVis = () => {
+      if (!document.hidden) return
+      if (!warningGiven) {
+        setWarningGiven(true); setShowModal(true)
+      } else {
+        setTabSwitchDetected(true)
+        submitResults.current()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVis)
+    return () => document.removeEventListener('visibilitychange', handleVis)
+  }, [warningGiven, isSubmitted])
+
+  /* ─────────────── block copy / right-click / view-src ──── */
+  useEffect(() => {
+    if (isSubmitted) return
+    const blockKeys = e => {
+      if ((e.ctrlKey || e.metaKey) && ['c','v','x','u'].includes(e.key.toLowerCase())) {
+        e.preventDefault(); setCopyAttempts(c => c + 1)
+      }
+    }
+    const blockCtx  = e => { e.preventDefault(); setCopyAttempts(c => c + 1) }
+
+    document.addEventListener('keydown',   blockKeys)
+    document.addEventListener('contextmenu', blockCtx)
+    return () => {
+      document.removeEventListener('keydown',   blockKeys)
+      document.removeEventListener('contextmenu', blockCtx)
+    }
+  }, [isSubmitted])
+
+  /* ───────────────── helpers ─────────────────────────────── */
   if (!questions.length) {
     return (
       <div className="h-screen flex items-center justify-center bg-[#64126D] text-white">
@@ -70,19 +125,19 @@ export default function QuizPage () {
     )
   }
 
-  const current  = questions[currentIndex]
-  const minutes  = Math.floor(timeLeft / 60).toString().padStart(2, '0')
-  const seconds  = (timeLeft % 60).toString().padStart(2, '0')
-  const progWide = `${((1800 - timeLeft) / 1800) * 100}%`
+  const current   = questions[currentIndex]
+  const minutes   = String(Math.floor(timeLeft / 60)).padStart(2,'0')
+  const seconds   = String(timeLeft % 60).padStart(2,'0')
+  const progWidth = `${((1800 - timeLeft) / 1800) * 100}%`
 
-  /* ─────────────────────────── UI ─────────────────────────── */
+  /* ───────────────────────── UI ──────────────────────────── */
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#64126D] p-4 sm:p-8">
-      {/* WARN MODAL */}
+      {/* warning modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="w-[90%] max-w-sm bg-white rounded-2xl p-6 text-center">
-            <h2 className="text-xl font-semibold mb-2">⚠️ Warning</h2>
+            <h2 className="text-xl font-semibold mb-2 text-gray-700">⚠️ Warning</h2>
             <p className="text-sm text-gray-700 mb-4">
               Tab switch detected — one more will end your quiz.
             </p>
@@ -96,20 +151,16 @@ export default function QuizPage () {
         </div>
       )}
 
-      {/* MAIN CARD */}
+      {/* quiz card */}
       <div className="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 select-none">
         {/* logo */}
         <div className="flex justify-center mb-6">
-          <img
-            src="/accent.png"
-            alt="Logo"
-            className="h-12 sm:h-16 w-auto"
-          />
+          <img src="/accent.png" alt="Logo" className="h-12 sm:h-16 w-auto" />
         </div>
 
-        {/* header row */}
+        {/* header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
-          <span className="font-medium text-gray-800 text-center sm:text-left">
+          <span className="font-medium text-gray-700 text-center sm:text-left">
             Question {currentIndex + 1} / {questions.length}
           </span>
           <span className="font-mono text-red-600 text-center sm:text-right">
@@ -117,11 +168,11 @@ export default function QuizPage () {
           </span>
         </div>
 
-        {/* progress bar */}
+        {/* progress */}
         <div className="h-2 rounded-full bg-gray-200 mb-6 overflow-hidden">
           <div
             className="h-full bg-red-500 transition-[width] duration-200"
-            style={{ width: progWide }}
+            style={{ width: progWidth }}
           />
         </div>
 
@@ -130,7 +181,7 @@ export default function QuizPage () {
           {current.question}
         </h2>
 
-        {/* options grid */}
+        {/* options */}
         <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2">
           {current.options.map(opt => (
             <button
@@ -161,6 +212,7 @@ export default function QuizPage () {
           >
             Previous
           </button>
+
           <button
             onClick={() => {
               if (selectedOption) {
@@ -168,7 +220,7 @@ export default function QuizPage () {
               }
               currentIndex + 1 < questions.length
                 ? setCurrentIndex(i => i + 1)
-                : submitResults()
+                : submitResults.current()
             }}
             className="rounded-lg px-6 py-2 bg-green-600 text-white"
           >

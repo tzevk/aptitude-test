@@ -61,8 +61,8 @@ export default function ResultPage () {
 
   /* -------------------------- UI ---------------------------- */
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="max-w-md text-center bg-white p-8 rounded-xl shadow-lg">
+    <div className="h-screen flex items-center justify-center bg-gray-100 p-4 text-gray-700">
+      <div className="max-w-md text-center bg-white p-8 rounded-xl shadow-lg text-gray-700">
         <h1 className="text-3xl font-bold mb-4">Quiz Completed</h1>
         <p className="text-lg">{status}</p>
       </div>
