@@ -182,7 +182,7 @@ export default function QuizPage() {
         </h2>
 
         {/* options */}
-        <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2">
+        <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 text-gray-800">
           {current.options.map(opt => (
             <button
               key={opt}
@@ -208,7 +208,7 @@ export default function QuizPage() {
               setCurrentIndex(i => i - 1)
             }}
             disabled={currentIndex === 0}
-            className="rounded-lg px-6 py-2 bg-gray-400 text-white disabled:opacity-50"
+            className="rounded-lg px-6 py-2 bg-gray-900 text-white disabled:opacity-50 text-gray-800"
           >
             Previous
           </button>
