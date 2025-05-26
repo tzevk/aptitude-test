@@ -36,13 +36,6 @@ export default function HomeScreen () {
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden
                     bg-gradient-to-b from-[#F8F6FF] via-[#C9A4DA]/60 to-[#64126D]">
-      {/* decorative background */}
-      <QuestionSVG className="w-[420px] top-10 left-1/2 -translate-x-1/2 opacity-30" />
-      <QuestionSVG className="w-[240px] -bottom-8 -left-4 rotate-6 opacity-20" />
-      <QuestionSVG className="w-[280px] -bottom-12 -right-2 -rotate-6 opacity-20" />
-      <Wave className="w-[240%] -top-24 -left-1/2 opacity-30" />
-      <Wave className="w-[240%] bottom-20 -left-1/2 rotate-180 opacity-20" />
-
       {/* white glass-card */}
       <div className="relative z-10 mx-auto w-[92%] max-w-sm rounded-[32px]
                       bg-white shadow-xl backdrop-blur-md p-8 flex flex-col items-center">

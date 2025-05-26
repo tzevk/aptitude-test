@@ -48,5 +48,6 @@ export const colleges = [
   "TPCT's College Of Engineering",
   "Vidyalankar Institute of Technology",
   "Vidyavardhini's College of Engineering and Technology Campus",
-  "Vishwakarma Institute of Technology (VIT)"
+  "Vishwakarma Institute of Technology (VIT)",
+  "D.Y.Patil College of Engineering & Technology Kasabawad Kolhapur"
 ]
